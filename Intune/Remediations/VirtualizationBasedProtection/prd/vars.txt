@@ -1,0 +1,10 @@
+displayName=Testnew
+nDisplayName=
+description=Testnew
+detectScript=VirtualizationBasedProtection_Detect.ps1
+remediateScript=VirtualizationBasedProtection_Remediate.ps1
+runAsAccount=system
+runAs32Bit=false
+assignedGroups=intunegroep;once;1;1:0:0;2024-02-29,SG-CL-A-CMW-L-A;hourly;1;include;W11,SG-CL-A-AVD-P;daily;1;1:0:0;include;W10
+excludedGroups=
+scopeTags=WPS-CDS-NL-01,WPS-CDS-NL-00
