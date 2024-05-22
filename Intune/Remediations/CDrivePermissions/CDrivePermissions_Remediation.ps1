@@ -50,9 +50,9 @@ If (Test-Path -Path $LogFile -PathType Leaf) {
 
 Write-Log -MessageType "INFO" -Message "==================$Phase=================="
 
-If (-Not(Test-Path -Path $env:SystemRoot\System32\Winevt\Logs\ING_CMW.evtx -PathType Leaf)) {
-        $logname = "ING_CMW"
-        $source = "ING"
+If (-Not(Test-Path -Path $env:SystemRoot\System32\Winevt\Logs\UCORP_CMW.evtx -PathType Leaf)) {
+        $logname = "UCORP_CMW"
+        $source = "UCORP"
         $log_size_limit = 8MB
 
         #Create new log and limit size
@@ -74,8 +74,8 @@ $acl.Access | ForEach-Object {
     }
 }
 
-New-EventLog -LogName "ING_CMW" -Source "C drive permissions"  -ErrorAction SilentlyContinue
-Write-EventLog -LogName "ING_CMW" -Source "C drive permissions" -EntryType Information -EventId 1 -Message "$Output"
+New-EventLog -LogName "UCORP_CMW" -Source "C drive permissions"  -ErrorAction SilentlyContinue
+Write-EventLog -LogName "UCORP_CMW" -Source "C drive permissions" -EntryType Information -EventId 1 -Message "$Output"
 
 
 try {
@@ -131,7 +131,7 @@ $acl.Access | ForEach-Object {
     }
 }
 
-New-EventLog -LogName "ING_CMW" -Source "C drive permissions"  -ErrorAction SilentlyContinue
-Write-EventLog -LogName "ING_CMW" -Source "C drive permissions" -EntryType Information -EventId 2 -Message "$Output"
+New-EventLog -LogName "UCORP_CMW" -Source "C drive permissions"  -ErrorAction SilentlyContinue
+Write-EventLog -LogName "UCORP_CMW" -Source "C drive permissions" -EntryType Information -EventId 2 -Message "$Output"
 
 Exit-Script 0
