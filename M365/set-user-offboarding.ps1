@@ -1,6 +1,6 @@
 #=============================================================================================================================
 #
-# Script Name:     AppRemoveUser.ps1
+# Script Name:     set-user-offboarding.ps1
 # Description:     Disable or remove onpremise or cloud user(s).
 #   
 # Notes      :     Possible to bulk disable or remove users.

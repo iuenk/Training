@@ -1,6 +1,6 @@
 #=============================================================================================================================
 #
-# Script Name:     AppCreateMailbox.ps1
+# Script Name:     create-mailbox.ps1
 # Description:     Create a shared, room or equipment mailbox.
 #   
 # Notes      :     
