@@ -1,0 +1,18 @@
+{
+    "Rules": [
+        {
+            "SettingName": "patchLevel",
+            "Operator": "IsEquals",
+            "DataType": "Boolean",
+            "Operand": true,
+            "MoreInfoUrl": "https://<domain>.sharepoint.com/sites/<siteinfo>",
+            "RemediationStrings": [
+                {
+                    "Language": "en_US",
+                    "Title": "Device is not patched in the last 90 days.",
+                    "Description": "Please update your device."
+                }
+            ]
+        }
+    ]
+}
