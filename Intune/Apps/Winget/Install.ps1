@@ -44,20 +44,12 @@ Else {
     Write-Host "Winget already installed, moving on"
 }
 
-$ResolveWingetPath = Resolve-Path "C:\Program Files\WindowsApps\Microsoft.DesktopAppInstaller_*_x64__8wekyb3d8bbwe"
-if ($ResolveWingetPath){
-        $WingetPath = $ResolveWingetPath[-1].Path
-}
-
-$config
-Set-Location -Path $wingetpath
-
 # #Trying to install Package with Winget
 if ($null -ne $PackageNames){
     foreach ($PackageName in $PackageNames){
         try {
             Write-Host "Installing $($PackageName) via Winget"
-            .\winget.exe install $PackageName --silent --accept-source-agreements --accept-package-agreements
+            Winget install $PackageName --silent --accept-source-agreements --accept-package-agreements
         }
         catch {
             Throw "Failed to install package $($_)"
