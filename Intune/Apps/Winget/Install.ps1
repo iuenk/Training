@@ -45,11 +45,14 @@ Else {
 }
 
 # #Trying to install Package with Winget
+$winget = Get-ChildItem -Path 'C:\Program Files\WindowsApps\' -Filter winget.exe -recurse | Sort-Object -Property 'FullName' -Descending | Select-Object -First 1 -ExpandProperty FullName
+
 if ($null -ne $PackageNames){
     foreach ($PackageName in $PackageNames){
         try {
             Write-Host "Installing $($PackageName) via Winget"
-            Winget install $PackageName --silent --accept-source-agreements --accept-package-agreements
+            Start-Process -FilePath $winget -NoNewWindow -Wait -ArgumentList "install $PackageName --silent --accept-package-agreements --accept-source-agreements"
+            Start-Sleep -Seconds 15
         }
         catch {
             Throw "Failed to install package $($_)"
