@@ -1,3 +1,10 @@
+Param
+  (
+    [parameter(Mandatory=$false)]
+    [String[]]
+    $param
+  )
+
 # Put ID as PackageName
 $PackageNames = @('Adobe.Acrobat.Reader.64-bit','7zip.7zip')
 $FileSuffix = Get-Date -format "yyyyMMdd-HHmmss"
@@ -7,12 +14,16 @@ $AppInstaller = Get-AppxProvisionedPackage -Online | Where-Object DisplayName -e
 # Start Logging
 Start-Transcript -Path "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs\Winget_Install_Apps_$FileSuffix.log" -Append
 
-# Check if Winget needs to be installed
-If($AppInstaller.Version -lt "2022.506.16.0") {
-    Write-Host "Winget is not installed, trying to install latest version from Github"
+$winget_exe = Resolve-Path "C:\Program Files\WindowsApps\Microsoft.DesktopAppInstaller_*_*__8wekyb3d8bbwe\winget.exe"
+if ($winget_exe.count -gt 1){
+        $winget_exe = $winget_exe[-1].Path
+}
 
-    Try {        
-        Write-Host "Creating Winget Packages Folder"
+if (!$winget_exe){
+    Write-Host "Winget is not installed trying to install latest version from Github."
+
+    try {        
+        Write-Host "Creating Winget Packages Folder."
 
         if (!(Test-Path -Path C:\ProgramData\WinGetPackages)) {
             New-Item -Path C:\ProgramData\WinGetPackages -Force -ItemType Directory
@@ -31,35 +42,32 @@ If($AppInstaller.Version -lt "2022.506.16.0") {
         #Installing dependencies + Winget
         Add-ProvisionedAppxPackage -online -PackagePath:.\Winget.msixbundle -DependencyPackagePath .\Microsoft.VCLibs.x64.14.00.Desktop.appx,.\microsoft.ui.xaml.2.7.0\tools\AppX\x64\Release\Microsoft.UI.Xaml.2.7.Appx -SkipLicense
 
-        Write-Host "Starting sleep for Winget to initiate"
+        Write-Host "Starting sleep for Winget to initiate."
         Start-Sleep 2
     }
-    Catch {
-        Throw "Failed to install Winget"
-        Break
+    catch {
+        throw "Failed to install Winget. Error: $($_)"
+        break
     }
 
 }
-Else {
-    Write-Host "Winget already installed, moving on"
+else {
+    Write-Host "Winget already installed Version: $($AppInstaller.Version)."
 }
-
-# #Trying to install Package with Winget
-$winget = Get-ChildItem -Path 'C:\Program Files\WindowsApps\' -Filter winget.exe -recurse | Sort-Object -Property 'FullName' -Descending | Select-Object -First 1 -ExpandProperty FullName
 
 if ($null -ne $PackageNames){
     foreach ($PackageName in $PackageNames){
         try {
-            Write-Host "Installing $($PackageName) via Winget"
-            Start-Process -FilePath $winget -NoNewWindow -Wait -ArgumentList "install $PackageName --silent --accept-package-agreements --accept-source-agreements"
-            Start-Sleep -Seconds 15
+            Write-Host "Installing $($PackageName) via Winget."
+            & $winget_exe install --exact --id $PackageName --silent --accept-package-agreements --accept-source-agreements --scope=machine $param
         }
         catch {
-            Throw "Failed to install package $($_)"
+            Throw "Failed to install package. Error: $($_)"
         }
     }
 }
 else {
     Write-Host "No packages found"
 }
+
 Stop-Transcript

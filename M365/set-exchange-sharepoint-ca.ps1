@@ -3,7 +3,7 @@ New-OwaMailboxPolicy -Name "Ucorp | OWA | Prohibit Download"
 Set-OwaMailboxPolicy -Identity "Ucorp | OWA | Prohibit Download" -ConditionalAccessPolicy ReadOnly
 
 # Configure owa mailbox policy for a specific user
-CasMailbox -Identity "username@ucorp.nl" -OwaMailboxPolicy "Ucorp | OWA | Prohibit Download"
+Set-CasMailbox -Identity "username@ucorp.nl" -OwaMailboxPolicy "Ucorp | OWA | Prohibit Download"
 
 # Configure owa mailbox policy for all users
 Get-Mailbox | Set-CASMailbox -OwaMailboxPolicy "Ucorp | OWA | Prohibit Download"
