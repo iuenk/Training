@@ -5,7 +5,7 @@
 # Notes      :     Version 1.0: Initial version as advise by MS Case 28927447 / Karan Rustagi      
 #
 # Created by :     Ivo Uenk
-# Date       :     28-6-2023
+# Date       :     15-5-2026
 # Version    :     1.0
 #=============================================================================================================================
 
@@ -22,43 +22,54 @@ function WriteToLogFile ($message)
 }
 
 $Regpath = "HKLM:\Software\Microsoft\Windows\Autopilot\EnrollmentStatusTracking\Device\Setup"
-
 $Regkey = "HasProvisioningCompleted"
 
+if (Get-Process -Name 'CloudExperienceHostBroker' -ErrorAction SilentlyContinue){$CloudExpBroker = $true}
+if (((Get-Item $regpath -EA Ignore).Property -contains $regkey) -eq $false){$regcheck = $true}
 
+if (($CloudExpBroker -eq $true) -and ($regcheck -eq $true)){
+    WriteToLogFile "Device is in device enrollment"
 
-If (Get-Process -Name 'CloudExperienceHostBroker' -ErrorAction SilentlyContinue) {$CloudExpBroker = $true }
+    $WUService = Get-Service -Name wuauserv| Select-Object Status, StartType
+    WriteToLogFile $WUService
 
-If (((Get-Item $regpath -EA Ignore).Property -contains $regkey) -eq $false) {$regcheck = $true}
+    Stop-service -Name wuauserv -Force 
+    Set-Service -Name wuauserv -Status stopped -StartupType disabled
 
+    Start-Sleep -Seconds 10
 
-
-If (($CloudExpBroker -eq $true) -and ($regcheck -eq $true)) {
-
-    Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\DriverSearching\' -Name "SearchOrderConfig" -Value 3
-    Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Device Metadata\' -Name "PreventDeviceMetadataFromNetwork" -Value 1
+    $WUService = Get-Service -Name wuauserv| Select-Object Status, StartType
     
-    If ((Test-Path -Path 'HKLM:\SOFTWARE\policies\Microsoft\Windows\WindowsUpdate') -eq $false){New-Item -Path 'HKLM:\policies\SOFTWARE\Microsoft\Windows\WindowsUpdate'}
-    Set-ItemProperty -Path 'HKLM:\SOFTWARE\policies\Microsoft\Windows\WindowsUpdate' -Name "ExcludeWUDriversInQualityUpdate" -Value 1
-    
-    Restart-Service -Name wuauserv
-
-    $ServState = Get-Service wuauserv
-    $ServState.WaitForStatus("Running",'00:00:10')
-
-    $ServState = Get-Service wuauserv
-    If ($ServState.status -eq "Running"){
-        WriteToLogFile "Registry values set and service restarted"
-        #Exit 0
-    }else{
-        WriteToLogFile "Registry values set and service no restarted"
-        #Exit 1
+    if ($WUService.StartType -eq "Disabled"){
+        WriteToLogFile $WUService
+        WriteToLogFile "Windows Update Service Disabled"
+        Exit 0
+    } 
+    else {  
+        WriteToLogFile $WUService
+        WriteToLogFile "Windows Update Service not disabled"
+        Exit 1
     }
+} 
+else {
+    WriteToLogFile "Device is NOT in ESP"
+    $WUService = Get-Service -Name wuauserv| Select-Object Status, StartType
+    WriteToLogFile $WUService
 
-} else {
+    Set-Service -Name wuauserv -status Running -StartupType manual
+    Start-Sleep -Seconds 10
 
-    WriteToLogFile "device is NOT in ESP"
-    #Exit 0
-
+    $WUService = Get-Service -Name wuauserv| Select-Object Status, StartType
+    
+    if ($WUService.StartType -eq "Manual"){
+        WriteToLogFile $WUService
+        WriteToLogFile "Windows Update Service set to manual"
+        exit 0
+    } 
+    else {  
+        WriteToLogFile $WUService
+        WriteToLogFile "Windows Update Service has an unknown state"
+        exit 1
+    }
+    exit 0
 }
-
