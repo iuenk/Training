@@ -42,6 +42,19 @@ try {
 	New-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CredentialsDelegation" -Name "AllowProtectedCreds" -PropertyType "DWORD" -Value 1 -Force
 	New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\LSASS.exe" -Name "AuditLevel" -PropertyType "DWORD" -Value 00000008 -Force
 
+	# Disable NetBIOS on all network adapters
+	$Path = "HKLM:\SYSTEM\CurrentControlSet\services\NetBT\Parameters\Interfaces\tcpip*"
+	$Name = "NetbiosOptions"
+	$Type = "DWORD"
+	$Value = 2
+
+	$Registry = Get-ItemProperty -Path $Path -Name $Name -ErrorAction Stop | Select-Object -ExpandProperty $Name
+	foreach ($Entry in $Registry){
+		if ($Entry -ne $Value){
+			Set-ItemProperty -Path $Path -Name $Name -Type $Type -Value $Value
+		}
+	}
+
 	# Disable anonymous access to named pipes/shared, anonymous enumeration of SAM accounts, non-admin remote access to SAM
 	New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "TokenLeakDetectDelaySecs" -PropertyType "DWORD" -Value 30 -Force 
 	New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "RestrictAnonymousSAM" -PropertyType "DWORD" -Value 1 -Force 
@@ -96,13 +109,6 @@ try {
     
     # Filtering Platform Connection
     Auditpol /set /category:"$system" /SubCategory:"{0CCE9226-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable
-
-    #Removing Powershell 2.0
-	$State = (Get-WindowsOptionalFeature -Online -FeatureName MicrosoftWindowsPowerShellV2Root).State
-
-	if ($State -ne "Disabled"){
-		Disable-WindowsOptionalFeature -Online -FeatureName MicrosoftWindowsPowerShellV2Root
-	}
 
     Write_Log -Message_Type "INFO" -Message "Security baseline is set"
     $EC += 0

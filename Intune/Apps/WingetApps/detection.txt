@@ -1,0 +1,5 @@
+Rule type: Registry
+Key path: HKEY_LOCAL_MACHINE\SOFTWARE\Ucorp
+Value name: WingetApps
+Detection method: Value exists
+Associated: No

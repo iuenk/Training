@@ -7,7 +7,7 @@
 #				   EventLogMaxSize controls the size of the eventlogs      
 #
 # Created by :     Ivo Uenk
-# Date       :     28-6-2023
+# Date       :     15-5-2026
 # Version    :     1.0
 #=============================================================================================================================
 
@@ -49,13 +49,15 @@ if ((!($regexist)) -or ($regexist.Fonts -lt 2)){
 	# set value to define new size instead of the default 1 MB
 	Set-ItemProperty -Path $regKeyFullPath -Name "MaxSize" -Value $eventlogMaxSize -Type DWord -Force
 
-	try{
-		if(!($regexist)){
+	try {
+		if (!($regexist)){
 			New-ItemProperty HKLM:\Software\Ucorp -Name 'EnchanceIntuneAgentLogging' -Value 1 -PropertyType string -ErrorAction Stop
-		}else{
+		}
+		else {
 			Set-ItemProperty HKLM:\Software\Ucorp -Name 'EnchanceIntuneAgentLogging' -Value 2 -ErrorAction Stop
 		}
-	}catch{
+	}
+	catch {
 		Write-Error 'failed to set the EnchanceIntuneAgentLogging'
 	}
 }

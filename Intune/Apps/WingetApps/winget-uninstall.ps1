@@ -1,35 +1,27 @@
-﻿<#
-.SYNOPSIS
-Install apps with Winget through Intune.
-Can be used standalone.
+#=============================================================================================================================
+# Script Name:     winget-uninstall.ps1
+# Description:     Uninstall apps with Winget.
+#   
+# Notes      :     Uninstall apps with Winget.
+#
+# Created by :     Ivo Uenk
+# Date       :     20-03-2026
+# Version    :     1.0
+#=============================================================================================================================
 
-.DESCRIPTION
-Allow to run Winget in System Context to install your apps.
-
-.PARAMETER AppIDs
-Forward Winget App ID to install. For multiple apps, separate with ",". Case sensitive.
-
-.PARAMETER Uninstall
-To uninstall app. Works with AppIDs
-
-.EXAMPLE
-.\winget-install.ps1 -AppIDs 7zip.7zip
-
-.EXAMPLE
-.\winget-install.ps1 -AppIDs 7zip.7zip -Uninstall
-
-.EXAMPLE
-.\winget-install.ps1 -AppIDs "7zip.7zip -v 22.00", "Notepad++.Notepad++"
-#>
-
-[CmdletBinding()]
-param(
-    [Parameter(Mandatory = $True, ParameterSetName = "AppIDs")] [String[]] $AppIDs,
-    [Parameter(Mandatory = $False)] [Switch] $Uninstall
+$AppIDs = @("Adobe.Acrobat.Reader.64-bit",
+            "Google.Chrome",
+            "7zip.7zip", 
+            "IrfanSkiljan.IrfanView", 
+            "VideoLAN.VLC",
+            "PDFsam.PDFsam", 
+            "Skillbrains.Lightshot",
+            "SanfordLP.DYMOConnect"
 )
 
-#region functions
+$RegCheck = 'WingetApps'
 
+#region functions
 # Get WinGet location
 function Get-WingetCmd {
     $WingetCmd = $null
@@ -218,40 +210,7 @@ function Confirm-Exist ($AppID) {
     }
 }
 
-# Install function
-function Install-App ($AppID, $AppArgs) {
-    $IsInstalled = Confirm-Install $AppID
-
-    if (!($IsInstalled)){
-        # Install App
-        Write-Host "[$AppID] installing..."
-
-        if ($AppArgs){
-            Write-Host "[$AppID] using custom arguments: [$AppArgs]."
-            $WingetArgs = "install --id $AppID -e --accept-package-agreements --accept-source-agreements -h $AppArgs" -split " "
-        }
-        else {
-            $WingetArgs = "install --id $AppID -e --accept-package-agreements --accept-source-agreements -h" -split " "
-        }
-
-        Write-Host "Running: `"$Winget`" $WingetArgs"
-        & "$Winget" $WingetArgs | Where-Object {$_ -notlike "   *"}
-
-        #Check if install is ok
-        $IsInstalled = Confirm-Install $AppID
-        if ($IsInstalled){
-            Write-Host "[$AppID] successfully installed."
-        }
-        else {
-            Write-Host "[$AppID] installation failed!"
-        }
-    }
-    else {
-        Write-Host "[$AppID] is already installed."
-    }
-}
-
-#Uninstall function
+# Uninstall function
 function Uninstall-App ($AppID, $AppArgs) {
     $IsInstalled = Confirm-Install $AppID
 
@@ -280,77 +239,71 @@ function Uninstall-App ($AppID, $AppArgs) {
 
 #region main
 
-# If running as a 32-bit process on an x64 system, re-launch as a 64-bit process
-if ("$env:PROCESSOR_ARCHITEW6432" -ne "ARM64") {
-    if (Test-Path "$($env:WINDIR)\SysNative\WindowsPowerShell\v1.0\powershell.exe") {
-        Start-Process "$($env:WINDIR)\SysNative\WindowsPowerShell\v1.0\powershell.exe" -Wait -ArgumentList "-NoProfile -ExecutionPolicy Bypass -Command $($MyInvocation.line)"
-        Exit $lastexitcode
-    }
-}
-
 # Start Logging
 $FileSuffix = Get-Date -format "yyyyMMdd-HHmmss"
-Start-Transcript -Path "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs\Winget_Install_Apps_$FileSuffix.log" -Append
+Start-Transcript -Path "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs\Winget_Uninstall_Apps_$FileSuffix.log" -Append
 
-#Config console output encoding
-$null = cmd /c '' #Tip for ISE
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-$Script:ProgressPreference = 'SilentlyContinue'
-
-#Check if current process is elevated (System or admin user)
-$CurrentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
-$Script:IsElevated = $CurrentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-
-#Log file
-$FileSuffix = Get-Date -format "yyyyMMdd-HHmmss"
-
-#Log Header
-if ($Uninstall){
-    Write-Host "$(Get-Date -Format (Get-culture).DateTimeFormat.ShortDatePattern) - NEW UNINSTALL REQUEST"
-}
-else {
-    Write-Host "$(Get-Date -Format (Get-culture).DateTimeFormat.ShortDatePattern) - NEW INSTALL REQUEST"
-}
-
-#Get Winget command
-$Script:Winget = Get-WingetCmd
-
-if ($IsElevated -eq $True) {
-    Write-Host "Running with admin rights."
-    Install-Prerequisites
-
-    # Reload Winget command
-    $Script:Winget = Get-WingetCmd
-    # Run Scope Machine funtion
-    Add-ScopeMachine
-}
-else {
-    Write-Host "Running without admin rights."
-}
-
-if ($Winget){
-    #Run install or uninstall for all apps
-    foreach ($App_Full in $AppIDs){
-        #Split AppID and Custom arguments
-        $AppID, $AppArgs = ($App_Full.Trim().Split(" ", 2))
-
-        Write-Host "[$AppID] start processing..."
-
-        # Install or Uninstall command
-        if ($Uninstall){
-            Uninstall-App $AppID $AppArgs
+try {
+    # If running as a 32-bit process on an x64 system, re-launch as a 64-bit process
+    if ("$env:PROCESSOR_ARCHITEW6432" -ne "ARM64") {
+        if (Test-Path "$($env:WINDIR)\SysNative\WindowsPowerShell\v1.0\powershell.exe") {
+            Start-Process "$($env:WINDIR)\SysNative\WindowsPowerShell\v1.0\powershell.exe" -Wait -ArgumentList "-NoProfile -ExecutionPolicy Bypass -Command $($MyInvocation.line)"
+            Exit $lastexitcode
         }
-        else {
+    }
+
+    #Config console output encoding
+    $null = cmd /c '' #Tip for ISE
+    [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+    $Script:ProgressPreference = 'SilentlyContinue'
+
+    #Check if current process is elevated (System or admin user)
+    $CurrentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
+    $Script:IsElevated = $CurrentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+
+    #Log Header
+    Write-Host "$(Get-Date -Format (Get-culture).DateTimeFormat.ShortDatePattern) - NEW INSTALL REQUEST"
+
+    #Get Winget command
+    $Script:Winget = Get-WingetCmd
+
+    if ($IsElevated -eq $True) {
+        Write-Host "Running with admin rights."
+        Install-Prerequisites
+
+        # Reload Winget command
+        $Script:Winget = Get-WingetCmd
+        # Run Scope Machine funtion
+        Add-ScopeMachine
+    }
+    else {
+        Write-Host "Running without admin rights."
+    }
+
+    if ($Winget){
+        #Run install or uninstall for all apps
+        foreach ($App_Full in $AppIDs){
+            #Split AppID and Custom arguments
+            $AppID, $AppArgs = ($App_Full.Trim().Split(" ", 2))
+
+            Write-Host "[$AppID] start processing..."
+
             # Check if app exists on Winget Repo
             $Exists = Confirm-Exist $AppID
             if ($Exists){
                 Install-App $AppID $AppArgs
             }
-        }
 
-        Write-Host "[$AppID] processing finished!"
-        Start-Sleep 1
+            Write-Host "[$AppID] processing finished!"
+            Start-Sleep 1
+        }
     }
+
+    Remove-ItemProperty HKLM:\Software\Ucorp -Name $RegCheck -ErrorAction Stop -Force
+}
+catch {
+    write-error "An error occurred while uninstalling Winget Apps: $_"
+    break
 }
 
 Write-Host "END REQUEST"

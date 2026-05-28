@@ -6,8 +6,8 @@
 #                  This script will set the recommended security settings on a device   
 #
 # Created by :     Ivo Uenk
-# Date       :     10-12-2023
-# Version    :     1.0
+# Date       :     13-05-2026
+# Version    :     1.1
 #=============================================================================================================================
 
 $EC = 0
@@ -249,16 +249,8 @@ If (Test-Path -Path $Target) {
 		Write_Log -Message_Type "ERROR" -Message "Mismatch between registry keys and values"; $EC += 1}
 
 } Else { 
-    Write_Log -Message_Type "ERROR" -Message "Path [$Target] not exist"; $EC += 1}
-
-############################ Removing Powershell 2.0 ############################
-
-$State = (Get-WindowsOptionalFeature -Online -FeatureName MicrosoftWindowsPowerShellV2Root).State
-
-if ($State -eq "Disabled"){
-    Write_Log -Message_Type "INFO" -Message "PowerShell 2.0 is disabled";$EC += 0}
-else {
-    Write_Log -Message_Type "ERROR" -Message "PowerShell 2.0 not disabled"; $EC += 1}
+    Write_Log -Message_Type "ERROR" -Message "Path [$Target] not exist"; $EC += 1
+}
 
 ############################ Enable PUA protection ############################
 
@@ -268,6 +260,32 @@ if ($PUAProtection -eq 1){
     Write_Log -Message_Type "INFO" -Message "PUA protection enabled";$EC += 0}
 else {
     Write_Log -Message_Type "ERROR" -Message "PUA protection not in enabled mode"; $EC += 1}
+
+############################ Disable NetBIOS on all network adapters ############################
+$Path = "HKLM:\SYSTEM\CurrentControlSet\services\NetBT\Parameters\Interfaces\tcpip*"
+$Name = "NetbiosOptions"
+$Value = 2
+
+try {
+    $Registry = Get-ItemProperty -Path $Path -Name $Name -ErrorAction Stop | Select-Object -ExpandProperty $Name
+	$Counter = 0
+	foreach ($Entry in $Registry) {
+    	if ($Entry -eq $Value) {
+		    $Counter+=0
+		} else {
+            $Counter++
+        }
+    } 
+	if ($Counter -eq 0){
+        Write_Log -Message_Type "INFO" -Message "Compliant";$EC += 0
+    } 
+    else {
+    	Write_Log -Message_Type "ERROR" -Message "Not Compliant"; $EC += 1
+    }
+} 
+catch {
+    Write_Log -Message_Type "ERROR" -Message "Not Compliant"; $EC += 1
+}
 
 ############################ Filtering Platform Packet Drop and Filtering Platform Connection ############################
 
